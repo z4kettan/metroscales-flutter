@@ -139,7 +139,10 @@ class _ScaleCard extends StatelessWidget {
                   background: AppColors.warningSoft,
                 )
               else
-                const Text('Up to date', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text(
+                  scale.lastSeenAt == null ? 'Not connected yet' : 'Up to date',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
             ]),
           ]),
         ),

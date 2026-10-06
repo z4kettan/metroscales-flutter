@@ -48,10 +48,17 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth = ref.read(authProvider);
       final loc = state.matchedLocation;
-      if (auth.isLoading && !auth.hasValue) return loc == '/splash' ? null : '/splash';
+      // Remember where the user was heading so a link or a reload lands there
+      // once the session has been checked.
+      final from = state.uri.queryParameters['from'];
+      if (auth.isLoading && !auth.hasValue) {
+        if (loc == '/splash') return null;
+        return Uri(path: '/splash', queryParameters: {'from': state.uri.toString()}).toString();
+      }
       final signedIn = auth.value != null;
       if (!signedIn) return loc == '/login' ? null : '/login';
-      if (loc == '/login' || loc == '/splash') return '/home';
+      if (loc == '/login') return '/home';
+      if (loc == '/splash') return (from == null || from.startsWith('/splash')) ? '/home' : from;
       return null;
     },
     routes: [

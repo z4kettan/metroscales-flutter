@@ -174,7 +174,7 @@ class _ItemFormScreenState extends ConsumerState<ItemFormScreen> {
                       controller: _plu,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(labelText: 'PLU', helperText: 'Number on the scale'),
+                      decoration: const InputDecoration(labelText: 'PLU', helperText: 'Scale number'),
                       validator: (v) {
                         final n = int.tryParse(v ?? '');
                         return (n == null || n < 1 || n > AppConstants.maxPlu) ? '1 to ${AppConstants.maxPlu}' : null;
