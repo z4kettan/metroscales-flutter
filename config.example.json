@@ -1,0 +1,5 @@
+{
+  "API_SCHEME": "http",
+  "API_HOST": "10.0.2.2",
+  "API_PORT": "3000"
+}
