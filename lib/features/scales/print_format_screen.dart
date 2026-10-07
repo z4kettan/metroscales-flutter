@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/scale.dart';
 import '../../providers/data_providers.dart';
@@ -113,9 +113,9 @@ class _FormState extends ConsumerState<_Form> {
               title: 'Footer lines',
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                const Text(
+                Text(
                   'Printed at the bottom of each label, one per line. Leave unused lines empty.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13),
                 ),
                 for (var i = 0; i < _postils.length; i++) ...[
                   const SizedBox(height: 12),
@@ -130,7 +130,7 @@ class _FormState extends ConsumerState<_Form> {
                         child: Center(
                           child: Text(
                             '${i + 1}',
-                            style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textMuted),
+                            style: TextStyle(fontWeight: FontWeight.w700, color: context.cs.outline),
                           ),
                         ),
                       ),

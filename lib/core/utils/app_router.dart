@@ -118,7 +118,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         parentNavigatorKey: _rootKey,
         path: '/bills',
-        builder: (_, s) => BillsScreen(date: DateTime.parse(s.uri.queryParameters['date']!)),
+        builder: (_, s) => BillsScreen(date: DateTime.tryParse(s.uri.queryParameters['date'] ?? '') ?? DateTime.now()),
       ),
       GoRoute(parentNavigatorKey: _rootKey, path: '/bill-settings', builder: (_, _) => const BillSettingsScreen()),
       GoRoute(parentNavigatorKey: _rootKey, path: '/users', builder: (_, _) => const UsersScreen()),

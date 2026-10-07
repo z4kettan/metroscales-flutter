@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_theme.dart';
 
 /// Asks the user to confirm. Returns true only when they tap the confirm button.
 Future<bool> confirm(
@@ -9,24 +9,23 @@ Future<bool> confirm(
   required String message,
   String confirmLabel = 'Confirm',
   bool danger = false,
+  IconData? icon,
 }) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(title, style: Theme.of(ctx).textTheme.titleLarge),
-      content: Text(message, style: const TextStyle(color: AppColors.textSecondary, height: 1.45)),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      icon: Icon(icon ?? (danger ? Icons.warning_amber_rounded : Icons.help_outline_rounded)),
+      iconColor: danger ? ctx.cs.error : ctx.cs.secondary,
+      title: Text(title, textAlign: TextAlign.center),
+      content: Text(message, textAlign: TextAlign.center, style: TextStyle(color: ctx.cs.onSurfaceVariant, height: 1.5)),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(
-            backgroundColor: danger ? AppColors.danger : AppColors.primary,
-            minimumSize: const Size(96, 44),
+            minimumSize: const Size(88, 44),
+            backgroundColor: danger ? ctx.cs.error : null,
+            foregroundColor: danger ? ctx.cs.onError : null,
           ),
           child: Text(confirmLabel),
         ),
@@ -43,6 +42,7 @@ Future<String?> promptText(
   required String label,
   String initial = '',
   String confirmLabel = 'Save',
+  IconData? icon,
 }) {
   final controller = TextEditingController(text: initial);
   return showDialog<String>(
@@ -54,7 +54,8 @@ Future<String?> promptText(
       }
 
       return AlertDialog(
-        title: Text(title, style: Theme.of(ctx).textTheme.titleLarge),
+        icon: icon == null ? null : Icon(icon),
+        title: Text(title),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -62,14 +63,9 @@ Future<String?> promptText(
           decoration: InputDecoration(labelText: label),
           onSubmitted: (_) => submit(),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(onPressed: submit, style: FilledButton.styleFrom(minimumSize: const Size(96, 44)), child: Text(confirmLabel)),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: submit, style: FilledButton.styleFrom(minimumSize: const Size(88, 44)), child: Text(confirmLabel)),
         ],
       );
     },

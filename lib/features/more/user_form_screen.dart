@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/branch.dart';
 import '../../models/user.dart';
@@ -148,7 +148,7 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                   _owner
                       ? 'Owners see every branch and can change prices, items, scales and users.'
                       : 'Staff see only the branches you pick below.',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13),
                 ),
                 if (!_owner) ...[
                   const SizedBox(height: 6),

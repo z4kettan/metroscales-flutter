@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/scale.dart';
 import '../../providers/data_providers.dart';
@@ -165,11 +165,11 @@ class _KeyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final filled = assigned != null;
     return Material(
-      color: filled ? AppColors.primarySoft : AppColors.surface,
+      color: filled ? context.cs.primaryContainer : context.cs.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: changed ? AppColors.warning : (filled ? AppColors.primary.withValues(alpha: 0.25) : AppColors.border),
+          color: changed ? context.status.warning : (filled ? context.cs.primary.withValues(alpha: 0.25) : context.cs.outlineVariant),
           width: changed ? 1.6 : 1,
         ),
       ),
@@ -184,7 +184,7 @@ class _KeyTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: filled ? AppColors.primaryDark : AppColors.textMuted,
+                color: filled ? context.cs.onPrimaryContainer : context.cs.outline,
               ),
             ),
             const Spacer(),
@@ -196,11 +196,11 @@ class _KeyTile extends StatelessWidget {
                 fontSize: 12.5,
                 height: 1.2,
                 fontWeight: filled ? FontWeight.w600 : FontWeight.w400,
-                color: filled ? AppColors.text : AppColors.textMuted,
+                color: filled ? context.cs.onSurface : context.cs.outline,
               ),
             ),
             if (filled)
-              Text('PLU ${assigned!.plu}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text('PLU ${assigned!.plu}', style: TextStyle(fontSize: 11, color: context.cs.onSurfaceVariant)),
           ]),
         ),
       ),

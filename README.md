@@ -19,6 +19,16 @@ The Flutter app for shop owners and staff. It works with the Metro Scales API
 - Users: owners add staff and choose which branches they see
 - Profile and PIN change
 - Branch switcher on every main screen
+- Appearance (More tab): light, dark or follow the phone, and on Android 12+
+  an option to match the phone's wallpaper colours
+
+## Look and feel
+
+The app uses Material 3 throughout: colour roles generated from the brand teal,
+large collapsing headers, filled cards and inputs, a navigation bar on phones
+and a navigation rail on tablets. The font is Plus Jakarta Sans (bundled, SIL
+Open Font License in `assets/fonts/OFL.txt`). Theme code lives in
+`lib/core/theme/app_theme.dart`.
 
 Staff accounts see sales and can update stock and record purchases. Prices,
 items, scales, bill settings and users are for owners only.
@@ -57,7 +67,7 @@ flutter build ipa --release --dart-define-from-file=config.json
 
 ```
 lib/
-  core/         constants, theme (colours, Inter font), router, formatting, toasts
+  core/         constants, theme (Material 3 colour scheme and type), router, formatting, toasts
   models/       data classes read from the API
   services/     one class per API area (auth, catalog, scales, stock, reports, users)
   providers/    Riverpod providers: signed-in user, branch, and data lists

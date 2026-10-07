@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/scale.dart';
 import '../../providers/data_providers.dart';
@@ -158,10 +158,10 @@ class _FormState extends ConsumerState<_Form> {
             title: 'WiFi',
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              const Text(
+              Text(
                 'The scale switches to this network on its next sync. Make sure the name and password are right, '
                 'or the scale will go offline until it is set up again on the scale itself.',
-                style: TextStyle(color: AppColors.textSecondary, height: 1.4, fontSize: 13),
+                style: TextStyle(color: context.cs.onSurfaceVariant, height: 1.4, fontSize: 13),
               ),
               const SizedBox(height: 14),
               TextFormField(

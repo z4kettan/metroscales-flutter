@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/utils/format.dart';
 import '../../models/item.dart';
@@ -106,7 +106,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
         child: Row(children: [
           Expanded(
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Total', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text('Total', style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
               Text(money(_total), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
             ]),
           ),
@@ -165,7 +165,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                     Expanded(child: Text(l.item.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15))),
                     IconButton(
                       tooltip: 'Remove',
-                      icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textMuted),
+                      icon: Icon(Icons.close_rounded, size: 20, color: context.cs.outline),
                       onPressed: () => setState(() => _lines.removeAt(i).dispose()),
                     ),
                   ]),

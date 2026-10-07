@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/utils/format.dart';
 import '../../models/scale.dart';
@@ -50,86 +50,87 @@ class ScaleDetailScreen extends ConsumerWidget {
     final canManage = ref.watch(currentUserProvider)?.canManage ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: Text(scale.value?.title ?? 'Scale')),
       body: AsyncView(
         value: scale,
         onRetry: () => ref.invalidate(scaleProvider(scaleId)),
         builder: (s) => RefreshIndicator(
           onRefresh: () => ref.refresh(scaleProvider(scaleId).future),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            children: [
-              _Header(s),
-              if (!s.online) ...[
-                const SizedBox(height: 12),
-                const _Notice(
-                  'This scale is offline. Changes you make are saved and sent automatically when it reconnects.',
-                ),
-              ],
-              const SectionLabel('Sync'),
-              Row(children: [
-                Expanded(
-                  child: _ActionTile(
-                    icon: Icons.upload_rounded,
-                    title: 'Send items',
-                    subtitle: 'Items and prices to scale',
-                    onTap: () => _run(context, ref, s, 'PUSH_ITEMS'),
+          edgeOffset: 120,
+          child: CustomScrollView(slivers: [
+            SliverAppBar.medium(title: Text(s.title)),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              sliver: SliverList.list(children: [
+                _Header(s),
+                if (!s.online) ...[
+                  const SizedBox(height: 12),
+                  const _Notice(
+                    'This scale is offline. Changes you make are saved and sent automatically when it reconnects.',
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionTile(
-                    icon: Icons.download_rounded,
-                    title: 'Read items',
-                    subtitle: 'Import items from scale',
-                    onTap: () => _run(context, ref, s, 'PULL_ITEMS'),
+                ],
+                const SectionLabel('Sync'),
+                Row(children: [
+                  Expanded(
+                    child: _ActionTile(
+                      icon: Icons.upload_rounded,
+                      title: 'Send items',
+                      subtitle: 'Items and prices to the scale',
+                      onTap: () => _run(context, ref, s, 'PUSH_ITEMS'),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionTile(
+                      icon: Icons.download_rounded,
+                      title: 'Read items',
+                      subtitle: 'Import items from the scale',
+                      tonal: true,
+                      onTap: () => _run(context, ref, s, 'PULL_ITEMS'),
+                    ),
+                  ),
+                ]),
+                if (canManage) ...[
+                  const SectionLabel('Settings'),
+                  Card(
+                    child: Column(children: [
+                      _NavTile(
+                        icon: Icons.tune_rounded,
+                        title: 'Scale details and WiFi',
+                        subtitle: s.wifiSsid == null ? 'Name, store name, WiFi' : 'WiFi: ${s.wifiSsid}',
+                        onTap: () => context.push('/scale/${s.id}/settings'),
+                      ),
+                      _NavTile(
+                        icon: Icons.receipt_rounded,
+                        title: 'Print format',
+                        subtitle: 'Label formats and footer lines',
+                        onTap: () => context.push('/scale/${s.id}/print-format'),
+                      ),
+                      _NavTile(
+                        icon: Icons.keyboard_rounded,
+                        title: 'Shortcut keys',
+                        subtitle: 'Items on the scale keyboard',
+                        onTap: () => context.push('/scale/${s.id}/shortcuts'),
+                      ),
+                    ]),
+                  ),
+                ],
+                const SectionLabel('Recent activity'),
+                _Activity(s.recentCommands),
+                if (canManage) ...[
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: () => _run(context, ref, s, 'CLEAR_PLU'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.cs.error,
+                      side: BorderSide(color: context.cs.error.withValues(alpha: 0.5)),
+                    ),
+                    icon: const Icon(Icons.delete_sweep_rounded),
+                    label: const Text('Clear all items on scale'),
+                  ),
+                ],
               ]),
-              if (canManage) ...[
-                const SectionLabel('Settings'),
-                Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(children: [
-                    _NavTile(
-                      icon: Icons.tune_rounded,
-                      title: 'Scale details and WiFi',
-                      subtitle: s.wifiSsid == null ? 'Name, store name, WiFi' : 'WiFi: ${s.wifiSsid}',
-                      onTap: () => context.push('/scale/${s.id}/settings'),
-                    ),
-                    const Divider(indent: 56),
-                    _NavTile(
-                      icon: Icons.receipt_outlined,
-                      title: 'Print format',
-                      subtitle: 'Label formats and footer lines',
-                      onTap: () => context.push('/scale/${s.id}/print-format'),
-                    ),
-                    const Divider(indent: 56),
-                    _NavTile(
-                      icon: Icons.keyboard_outlined,
-                      title: 'Shortcut keys',
-                      subtitle: 'Items on the scale keyboard',
-                      onTap: () => context.push('/scale/${s.id}/shortcuts'),
-                    ),
-                  ]),
-                ),
-              ],
-              const SectionLabel('Recent activity'),
-              _Activity(s.recentCommands),
-              if (canManage) ...[
-                const SizedBox(height: 24),
-                OutlinedButton.icon(
-                  onPressed: () => _run(context, ref, s, 'CLEAR_PLU'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.danger,
-                    side: BorderSide(color: AppColors.danger.withValues(alpha: 0.35)),
-                  ),
-                  icon: const Icon(Icons.delete_sweep_outlined),
-                  label: const Text('Clear all items on scale'),
-                ),
-              ],
-            ],
-          ),
+            ),
+          ]),
         ),
       ),
     );
@@ -142,38 +143,35 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final st = context.status;
     return Card(
       child: Column(children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
           child: Row(children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: s.online ? AppColors.successSoft : AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(Icons.scale_rounded, size: 28, color: s.online ? AppColors.success : AppColors.textMuted),
+            IconBox(
+              Icons.scale_rounded,
+              size: 60,
+              background: s.online ? st.successContainer : cs.surfaceContainerHighest,
+              foreground: s.online ? st.onSuccessContainer : cs.onSurfaceVariant,
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(s.title, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 2),
-                Text(s.model ?? 'Weighing scale', style: const TextStyle(color: AppColors.textSecondary)),
+                Text(s.model ?? 'Weighing scale', style: context.tt.titleMedium),
+                const SizedBox(height: 6),
+                StatusPill.online(s.online),
               ]),
             ),
-            StatusPill.online(s.online),
           ]),
         ),
-        const Divider(),
-        InfoRow('MAC address', formatMac(s.mac)),
-        InfoRow('Last seen', since(s.lastSeenAt)),
-        if (s.storeName != null) InfoRow('Store name', s.storeName!),
-        if (s.lastIp != null) InfoRow('IP address', s.lastIp!),
-        if (s.firmware != null) InfoRow('Firmware', s.firmware!),
-        const SizedBox(height: 6),
+        InfoRow('MAC address', formatMac(s.mac), icon: Icons.fingerprint_rounded),
+        InfoRow('Last seen', since(s.lastSeenAt), icon: Icons.schedule_rounded),
+        if (s.storeName != null) InfoRow('Store name', s.storeName!, icon: Icons.storefront_rounded),
+        if (s.lastIp != null) InfoRow('IP address', s.lastIp!, icon: Icons.lan_rounded),
+        if (s.firmware != null) InfoRow('Firmware', s.firmware!, icon: Icons.memory_rounded),
+        const SizedBox(height: 8),
       ]),
     );
   }
@@ -184,50 +182,50 @@ class _Notice extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.infoSoft,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
-        ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Icon(Icons.info_outline_rounded, color: AppColors.info, size: 20),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(height: 1.4, color: Color(0xFF194185)))),
-        ]),
-      );
+  Widget build(BuildContext context) {
+    final cs = context.cs;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: cs.secondaryContainer, borderRadius: BorderRadius.circular(20)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.cloud_sync_rounded, color: cs.onSecondaryContainer),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text, style: TextStyle(height: 1.45, color: cs.onSecondaryContainer, fontWeight: FontWeight.w500))),
+      ]),
+    );
+  }
 }
 
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  const _ActionTile({required this.icon, required this.title, required this.subtitle, required this.onTap, this.tonal = false});
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool tonal;
 
   @override
-  Widget build(BuildContext context) => Card(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: AppColors.primary, size: 20),
-              ),
-              const SizedBox(height: 12),
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 2),
-              Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
-            ]),
-          ),
+  Widget build(BuildContext context) {
+    final cs = context.cs;
+    final bg = tonal ? cs.secondaryContainer : cs.primary;
+    final fg = tonal ? cs.onSecondaryContainer : cs.onPrimary;
+    return Card(
+      color: bg,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(icon, color: fg, size: 28),
+            const SizedBox(height: 18),
+            Text(title, style: context.tt.titleMedium?.copyWith(color: fg)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: TextStyle(color: fg.withValues(alpha: 0.85), fontSize: 13)),
+          ]),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _NavTile extends StatelessWidget {
@@ -240,8 +238,9 @@ class _NavTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
         onTap: onTap,
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: IconBox(icon, size: 42),
+        title: Text(title),
         subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right_rounded),
       );
@@ -254,33 +253,33 @@ class _Activity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (commands.isEmpty) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text('Nothing sent to this scale yet.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Nothing sent to this scale yet.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: context.cs.onSurfaceVariant),
+          ),
         ),
       );
     }
     return Card(
-      clipBehavior: Clip.antiAlias,
       child: Column(children: [
         for (final (i, c) in commands.take(8).indexed) ...[
-          if (i > 0) const Divider(indent: 16),
+          if (i > 0) const Divider(indent: 16, endIndent: 16),
           ListTile(
-            dense: true,
-            title: Text(c.label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+            title: Text(c.label),
             subtitle: Text(c.error ?? since(c.createdAt)),
-            trailing: _statusPill(c),
+            trailing: switch (c.status) {
+              'DONE' => StatusPill(c.statusLabel, tone: Tone.success),
+              'FAILED' => StatusPill(c.statusLabel, tone: Tone.danger),
+              'CANCELLED' => const StatusPill('Replaced'),
+              _ => StatusPill(c.statusLabel, tone: Tone.warning),
+            },
           ),
         ],
       ]),
     );
   }
-
-  Widget _statusPill(ScaleCommand c) => switch (c.status) {
-        'DONE' => StatusPill(c.statusLabel, color: AppColors.success, background: AppColors.successSoft),
-        'FAILED' => StatusPill(c.statusLabel, color: AppColors.danger, background: AppColors.dangerSoft),
-        'CANCELLED' => StatusPill('Replaced', color: AppColors.textSecondary, background: AppColors.divider),
-        _ => StatusPill(c.statusLabel, color: AppColors.warning, background: AppColors.warningSoft),
-      };
 }

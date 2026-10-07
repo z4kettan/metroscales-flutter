@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/branch.dart';
 import '../../providers/branch_provider.dart';
@@ -136,7 +136,7 @@ class _Preview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const mono = TextStyle(fontFamily: 'monospace', fontSize: 12.5, height: 1.5, color: AppColors.text);
+    final mono = TextStyle(fontFamily: 'monospace', fontSize: 12.5, height: 1.5, color: context.cs.onSurface);
     Widget line(String t, {bool bold = false}) => t.trim().isEmpty
         ? const SizedBox.shrink()
         : Text(t, textAlign: TextAlign.center, style: mono.copyWith(fontWeight: bold ? FontWeight.w700 : null));
@@ -146,18 +146,18 @@ class _Preview extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: context.cs.outlineVariant),
           borderRadius: BorderRadius.circular(6),
           boxShadow: const [BoxShadow(color: Color(0x0F101828), blurRadius: 12, offset: Offset(0, 4))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           line(header, bold: true),
           line(offer),
-          const Text('- - - - - - - - - - - - - - -', textAlign: TextAlign.center, style: mono),
-          const Text('Thakkali  0.500 kg   ₹20.00', style: mono),
-          const Text('Payar     0.250 kg   ₹10.00', style: mono),
+          Text('- - - - - - - - - - - - - - -', textAlign: TextAlign.center, style: mono),
+          Text('Thakkali  0.500 kg   ₹20.00', style: mono),
+          Text('Payar     0.250 kg   ₹10.00', style: mono),
           line(itemFooter),
-          const Text('- - - - - - - - - - - - - - -', textAlign: TextAlign.center, style: mono),
+          Text('- - - - - - - - - - - - - - -', textAlign: TextAlign.center, style: mono),
           Text('TOTAL              ₹30.00', style: mono.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           line(billFooter),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/utils/format.dart';
 import '../../models/user.dart';
@@ -27,7 +27,7 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(children: [
               CircleAvatar(
                 radius: 36,
-                backgroundColor: AppColors.primary,
+                backgroundColor: context.cs.primary,
                 foregroundColor: Colors.white,
                 child: Text(initials(user.name), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
               ),
@@ -36,7 +36,7 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: 2),
               Text(
                 [roleName(user.role), ?user.customerName].join(' · '),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: context.cs.onSurfaceVariant),
               ),
             ]),
           ),

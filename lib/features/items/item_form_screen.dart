@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/item.dart';
 import '../../providers/branch_provider.dart';
@@ -142,7 +142,7 @@ class _ItemFormScreenState extends ConsumerState<ItemFormScreen> {
           if (_editing)
             IconButton(
               tooltip: 'Delete item',
-              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+              icon: Icon(Icons.delete_outline_rounded, color: context.cs.error),
               onPressed: _delete,
             ),
         ],
@@ -297,11 +297,11 @@ class _ItemFormScreenState extends ConsumerState<ItemFormScreen> {
               ]),
             ),
             const SizedBox(height: 12),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 4),
               child: Text(
                 'Saved items are sent to the scales in this branch automatically.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13),
               ),
             ),
           ],

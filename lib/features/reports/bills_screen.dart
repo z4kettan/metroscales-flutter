@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/format.dart';
 import '../../providers/data_providers.dart';
 import '../../widgets/async_view.dart';
@@ -38,12 +38,12 @@ class BillsScreen extends ConsumerWidget {
                     child: Row(children: [
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('Total', style: TextStyle(color: AppColors.textSecondary)),
+                          Text('Total', style: TextStyle(color: context.cs.onSurfaceVariant)),
                           Text(money(total), style: Theme.of(context).textTheme.headlineSmall),
                         ]),
                       ),
                       Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                        const Text('Bills', style: TextStyle(color: AppColors.textSecondary)),
+                        Text('Bills', style: TextStyle(color: context.cs.onSurfaceVariant)),
                         Text('${list.length}', style: Theme.of(context).textTheme.headlineSmall),
                       ]),
                     ]),

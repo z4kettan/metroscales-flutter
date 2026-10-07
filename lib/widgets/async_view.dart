@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/theme/app_colors.dart';
 import '../core/utils/app_toast.dart';
 import 'empty_state.dart';
 
@@ -20,22 +19,38 @@ class AsyncView<T> extends StatelessWidget {
       skipLoadingOnRefresh: true,
       skipLoadingOnReload: true,
       data: builder,
-      loading: () => const Center(
-        child: SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.6)),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => EmptyState(
         icon: Icons.cloud_off_rounded,
-        iconColor: AppColors.danger,
+        error: true,
         title: 'Could not load',
         message: AppToast.errorText(e),
         action: onRetry == null
             ? null
-            : OutlinedButton.icon(
+            : FilledButton.tonalIcon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
+                icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Try again'),
               ),
       ),
+    );
+  }
+}
+
+/// The same as [AsyncView] for use inside a [CustomScrollView].
+class SliverAsyncView<T> extends StatelessWidget {
+  const SliverAsyncView({super.key, required this.value, required this.builder, this.onRetry});
+
+  final AsyncValue<T> value;
+  final Widget Function(T data) builder;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (value.hasValue) return builder(value.requireValue);
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: AsyncView<T>(value: value, builder: (_) => const SizedBox.shrink(), onRetry: onRetry),
     );
   }
 }

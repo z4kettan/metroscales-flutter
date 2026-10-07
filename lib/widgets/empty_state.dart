@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_theme.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -9,18 +9,18 @@ class EmptyState extends StatelessWidget {
     required this.title,
     this.message,
     this.action,
-    this.iconColor = AppColors.primary,
+    this.error = false,
   });
 
   final IconData icon;
   final String title;
   final String? message;
   final Widget? action;
-  final Color iconColor;
+  final bool error;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final cs = context.cs;
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
@@ -28,22 +28,25 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.08), shape: BoxShape.circle),
-              child: Icon(icon, size: 30, color: iconColor),
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: error ? cs.errorContainer : cs.secondaryContainer,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Icon(icon, size: 40, color: error ? cs.onErrorContainer : cs.onSecondaryContainer),
             ),
-            const SizedBox(height: 16),
-            Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            Text(title, style: context.tt.titleLarge, textAlign: TextAlign.center),
             if (message != null) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
                 message!,
-                style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary, height: 1.45),
+                style: context.tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant, height: 1.5),
                 textAlign: TextAlign.center,
               ),
             ],
-            if (action != null) ...[const SizedBox(height: 20), action!],
+            if (action != null) ...[const SizedBox(height: 24), action!],
           ],
         ),
       ),

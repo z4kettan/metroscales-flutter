@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_theme.dart';
 import '../core/utils/format.dart';
 import '../models/item.dart';
 import '../providers/data_providers.dart';
@@ -18,13 +18,13 @@ Future<Item?> pickItem(BuildContext context, {String title = 'Choose item', bool
     isScrollControlled: true,
     useSafeArea: true,
     builder: (_) => FractionallySizedBox(
-      heightFactor: 0.88,
+      heightFactor: 0.9,
       child: _ItemPicker(title: title, allowClear: allowClear),
     ),
   );
 }
 
-/// Returned by [pickItem] when the user taps "Clear this key".
+/// Returned by [pickItem] when the user taps "Clear key".
 const clearedItem = Item(id: '', plu: 0, name: '');
 
 class _ItemPicker extends ConsumerStatefulWidget {
@@ -44,14 +44,15 @@ class _ItemPickerState extends ConsumerState<_ItemPicker> {
     final items = ref.watch(itemsProvider);
     return Column(children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 12, 8),
+        padding: const EdgeInsets.fromLTRB(24, 0, 16, 12),
         child: Row(children: [
-          Expanded(child: Text(widget.title, style: Theme.of(context).textTheme.titleLarge)),
+          Expanded(child: Text(widget.title, style: context.tt.headlineSmall)),
           if (widget.allowClear)
-            TextButton(
+            TextButton.icon(
               onPressed: () => Navigator.pop(context, clearedItem),
-              style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-              child: const Text('Clear this key'),
+              style: TextButton.styleFrom(foregroundColor: context.cs.error),
+              icon: const Icon(Icons.backspace_outlined, size: 18),
+              label: const Text('Clear key'),
             ),
         ]),
       ),
@@ -67,17 +68,16 @@ class _ItemPickerState extends ConsumerState<_ItemPicker> {
             final list = all
                 .where((i) => _search.isEmpty || i.name.toLowerCase().contains(_search) || '${i.plu}'.startsWith(_search))
                 .toList();
-            if (list.isEmpty) {
-              return const EmptyState(icon: Icons.search_off_rounded, title: 'No matching items');
-            }
-            return ListView.separated(
+            if (list.isEmpty) return const EmptyState(icon: Icons.search_off_rounded, title: 'No matching items');
+            return ListView.builder(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
               itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(indent: 78),
               itemBuilder: (_, i) {
                 final item = list[i];
                 return ListTile(
-                  leading: PluBadge(item.plu),
-                  title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  leading: PluBadge(item.plu, size: 44),
+                  title: Text(item.name),
                   subtitle: Text('${money(item.price)} / ${unitLabel(item.unit)}'),
                   onTap: () => Navigator.pop(context, item),
                 );

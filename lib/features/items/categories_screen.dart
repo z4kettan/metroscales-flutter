@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../models/item.dart';
 import '../../providers/auth_provider.dart';
@@ -94,8 +94,8 @@ class CategoriesScreen extends ConsumerWidget {
                     if (i > 0) const Divider(indent: 68),
                     ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: AppColors.primarySoft,
-                        foregroundColor: AppColors.primaryDark,
+                        backgroundColor: context.cs.primaryContainer,
+                        foregroundColor: context.cs.onPrimaryContainer,
                         child: Text('${c.code}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                       ),
                       title: Text(c.name, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -103,11 +103,11 @@ class CategoriesScreen extends ConsumerWidget {
                       trailing: canManage
                           ? PopupMenuButton<String>(
                               onSelected: (v) => v == 'rename' ? _rename(context, ref, c) : _delete(context, ref, c),
-                              itemBuilder: (_) => const [
+                              itemBuilder: (_) => [
                                 PopupMenuItem(value: 'rename', child: Text('Rename')),
                                 PopupMenuItem(
                                   value: 'delete',
-                                  child: Text('Delete', style: TextStyle(color: AppColors.danger)),
+                                  child: Text('Delete', style: TextStyle(color: context.cs.error)),
                                 ),
                               ],
                             )

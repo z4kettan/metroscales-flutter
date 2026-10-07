@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/format.dart';
 import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
@@ -42,8 +42,8 @@ class UsersScreen extends ConsumerWidget {
                       onTap: u.id == me?.id ? () => context.push('/profile') : () => context.push('/user', extra: u),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       leading: CircleAvatar(
-                        backgroundColor: u.isActive ? AppColors.primarySoft : AppColors.divider,
-                        foregroundColor: u.isActive ? AppColors.primaryDark : AppColors.textMuted,
+                        backgroundColor: u.isActive ? context.cs.primaryContainer : context.cs.outlineVariant,
+                        foregroundColor: u.isActive ? context.cs.onPrimaryContainer : context.cs.outline,
                         child: Text(initials(u.name), style: const TextStyle(fontWeight: FontWeight.w700)),
                       ),
                       title: Row(children: [
@@ -56,7 +56,7 @@ class UsersScreen extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         if (!u.isActive)
-                          const StatusPill('Disabled', color: AppColors.danger, background: AppColors.dangerSoft),
+                          const StatusPill('Disabled', tone: Tone.danger),
                       ]),
                       subtitle: Text(
                         u.role == UserRole.owner
@@ -64,18 +64,18 @@ class UsersScreen extends ConsumerWidget {
                             : '${u.email}\nStaff · ${u.branches.isEmpty ? 'no branches' : u.branches.map((b) => b.name).join(', ')}',
                       ),
                       isThreeLine: true,
-                      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                      trailing: Icon(Icons.chevron_right_rounded, color: context.cs.outline),
                     ),
                   ],
                 ]),
               ),
               const SizedBox(height: 12),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
                   'Staff can see sales, update stock and record purchases in their branches. '
                   'Only owners can change prices, items, scales and users.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4),
+                  style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13, height: 1.4),
                 ),
               ),
             ],

@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/format.dart';
 import '../../models/user.dart';
+import '../../providers/appearance_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/dialogs.dart';
 import '../../widgets/section_card.dart';
+import '../../widgets/tab_page.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -17,80 +19,98 @@ class MoreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final canManage = user?.canManage ?? false;
+    final cs = context.cs;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-        children: [
-          if (user != null)
-            Card(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () => context.push('/profile'),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      child: Text(initials(user.name), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(user.name, style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 2),
-                        Text(user.email, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                        const SizedBox(height: 2),
-                        Text(
-                          [roleName(user.role), ?user.customerName].join(' · '),
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                        ),
-                      ]),
-                    ),
-                    const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
-                  ]),
+    return TabPage(
+      title: 'More',
+      showBranch: false,
+      slivers: [
+        SliverPagePadding(
+          bottom: 32,
+          sliver: SliverList.list(children: [
+            if (user != null)
+              Card(
+                color: cs.primaryContainer,
+                child: InkWell(
+                  onTap: () => context.push('/profile'),
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Row(children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: cs.primary,
+                        foregroundColor: cs.onPrimary,
+                        child: Text(initials(user.name), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(user.name, style: context.tt.titleLarge?.copyWith(color: cs.onPrimaryContainer)),
+                          const SizedBox(height: 2),
+                          Text(user.email, style: TextStyle(color: cs.onPrimaryContainer.withValues(alpha: 0.8))),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(color: cs.surface.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(999)),
+                            child: Text(
+                              [roleName(user.role), ?user.customerName].join(' · '),
+                              style: TextStyle(color: cs.onPrimaryContainer, fontWeight: FontWeight.w700, fontSize: 12.5),
+                            ),
+                          ),
+                        ]),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: cs.onPrimaryContainer),
+                    ]),
+                  ),
                 ),
               ),
-            ),
-          const SectionLabel('Stock'),
-          _Group([
-            if (canManage) _Entry(Icons.sell_outlined, 'Update prices', 'Change prices for this branch', '/prices'),
-            _Entry(Icons.inventory_outlined, 'Update stock', 'Correct stock after a count', '/stock'),
-            _Entry(Icons.local_shipping_outlined, 'Purchases', 'Stock bought from suppliers', '/purchases'),
-            _Entry(Icons.category_outlined, 'Categories', 'Group your items', '/categories'),
-          ]),
-          if (canManage) ...[
-            const SectionLabel('Shop settings'),
+            const SectionLabel('Stock'),
             _Group([
-              _Entry(Icons.receipt_long_outlined, 'Bill settings', 'Header and footer printed on bills', '/bill-settings'),
-              _Entry(Icons.group_outlined, 'Users', 'Staff who can use the app', '/users'),
+              if (canManage) const _Entry(Icons.sell_rounded, 'Update prices', 'Change prices for this branch', '/prices'),
+              const _Entry(Icons.inventory_rounded, 'Update stock', 'Correct stock after a count', '/stock'),
+              const _Entry(Icons.local_shipping_rounded, 'Purchases', 'Stock bought from suppliers', '/purchases'),
+              const _Entry(Icons.category_rounded, 'Categories', 'Group your items', '/categories'),
             ]),
-          ],
-          const SectionLabel('Account'),
-          _Group([
-            _Entry(Icons.person_outline_rounded, 'Profile and PIN', 'Your name, email and PIN', '/profile'),
+            if (canManage) ...[
+              const SectionLabel('Shop settings'),
+              const _Group([
+                _Entry(Icons.receipt_long_rounded, 'Bill settings', 'Header and footer printed on bills', '/bill-settings'),
+                _Entry(Icons.group_rounded, 'Users', 'Staff who can use the app', '/users'),
+              ]),
+            ],
+            const SectionLabel('Appearance'),
+            const _AppearanceCard(),
+            const SectionLabel('Account'),
+            const _Group([_Entry(Icons.person_rounded, 'Profile and PIN', 'Your name, email and PIN', '/profile')]),
+            const SizedBox(height: 24),
+            FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(
+                backgroundColor: cs.errorContainer,
+                foregroundColor: cs.onErrorContainer,
+                minimumSize: const Size(0, 52),
+              ),
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Sign out'),
+              onPressed: () async {
+                final ok = await confirm(
+                  context,
+                  title: 'Sign out?',
+                  message: 'You will need your email and PIN to sign in again.',
+                  confirmLabel: 'Sign out',
+                  icon: Icons.logout_rounded,
+                );
+                if (ok) await ref.read(authProvider.notifier).logout();
+              },
+            ),
+            const SizedBox(height: 20),
+            Text(
+              '${AppConstants.appName} ${AppConstants.appVersion}',
+              textAlign: TextAlign.center,
+              style: context.tt.bodySmall,
+            ),
           ]),
-          const SizedBox(height: 20),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
-            icon: const Icon(Icons.logout_rounded),
-            label: const Text('Sign out'),
-            onPressed: () async {
-              final ok = await confirm(context, title: 'Sign out?', message: 'You will need your email and PIN to sign in again.', confirmLabel: 'Sign out');
-              if (ok) await ref.read(authProvider.notifier).logout();
-            },
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '${AppConstants.appName} ${AppConstants.appVersion}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -109,23 +129,50 @@ class _Group extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        clipBehavior: Clip.antiAlias,
         child: Column(children: [
-          for (final (i, e) in entries.indexed) ...[
-            if (i > 0) const Divider(indent: 64),
+          for (final e in entries)
             ListTile(
               onTap: () => context.push(e.path),
-              leading: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(10)),
-                child: Icon(e.icon, color: AppColors.primary, size: 20),
-              ),
-              title: Text(e.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              leading: IconBox(e.icon, size: 42),
+              title: Text(e.title),
               subtitle: Text(e.subtitle),
-              trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+              trailing: const Icon(Icons.chevron_right_rounded),
             ),
-          ],
         ]),
       );
+}
+
+class _AppearanceCard extends ConsumerWidget {
+  const _AppearanceCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final a = ref.watch(appearanceProvider);
+    final notifier = ref.read(appearanceProvider.notifier);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SegmentedButton<ThemeMode>(
+            segments: const [
+              ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_rounded), label: Text('Light')),
+              ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto_rounded), label: Text('Auto')),
+              ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_rounded), label: Text('Dark')),
+            ],
+            selected: {a.mode},
+            onSelectionChanged: (s) => notifier.setMode(s.first),
+          ),
+          const SizedBox(height: 4),
+          SwitchListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+            value: a.wallpaperColours,
+            onChanged: notifier.setWallpaperColours,
+            title: const Text('Match wallpaper colours'),
+            subtitle: const Text('Use your phone\'s colours (Android 12 and newer)'),
+          ),
+        ]),
+      ),
+    );
+  }
 }

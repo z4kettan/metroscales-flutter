@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/utils/format.dart';
 import '../../models/sales.dart';
@@ -66,8 +66,8 @@ class _PurchaseCard extends ConsumerWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.local_shipping_outlined, color: AppColors.primary),
+              decoration: BoxDecoration(color: context.cs.primaryContainer, borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.local_shipping_outlined, color: context.cs.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -81,7 +81,7 @@ class _PurchaseCard extends ConsumerWidget {
                     '${p.lines.length} ${p.lines.length == 1 ? 'item' : 'items'}',
                     if (p.invoiceNo?.isNotEmpty == true) 'Inv ${p.invoiceNo}',
                   ].join(' · '),
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13),
                 ),
               ]),
             ),
@@ -111,7 +111,7 @@ Future<void> _showPurchase(BuildContext context, WidgetRef ref, Purchase p) {
           const SizedBox(height: 4),
           Text(
             [day(p.purchasedAt), if (p.invoiceNo?.isNotEmpty == true) 'Invoice ${p.invoiceNo}'].join('  ·  '),
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.cs.onSurfaceVariant),
           ),
           if (p.note?.isNotEmpty == true) ...[const SizedBox(height: 8), Text(p.note!)],
           const SizedBox(height: 16),
@@ -123,7 +123,7 @@ Future<void> _showPurchase(BuildContext context, WidgetRef ref, Purchase p) {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(l.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     Text('${qtyWithUnit(l.quantity, l.unit)} × ${money(l.unitCost)}',
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                        style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
                   ]),
                 ),
                 Text(money(l.amount), style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -138,8 +138,8 @@ Future<void> _showPurchase(BuildContext context, WidgetRef ref, Purchase p) {
             const SizedBox(height: 24),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.danger,
-                side: BorderSide(color: AppColors.danger.withValues(alpha: 0.35)),
+                foregroundColor: context.cs.error,
+                side: BorderSide(color: context.cs.error.withValues(alpha: 0.35)),
               ),
               icon: const Icon(Icons.delete_outline_rounded),
               label: const Text('Delete purchase'),

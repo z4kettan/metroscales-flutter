@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/utils/format.dart';
 import '../../models/item.dart';
@@ -135,7 +135,7 @@ class _EditorState extends ConsumerState<_Editor> {
           title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(widget.title),
             if (branch != null)
-              Text(branch.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+              Text(branch.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: context.cs.onSurfaceVariant)),
           ]),
         ),
         bottomNavigationBar: BottomActionBar(
@@ -161,9 +161,10 @@ class _EditorState extends ConsumerState<_Editor> {
                 final item = list[idx];
                 final changed = _changes.containsKey(item.id);
                 return Card(
+                  color: changed ? context.cs.primaryContainer : null,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(color: changed ? AppColors.primary : AppColors.border, width: changed ? 1.4 : 1),
+                    borderRadius: BorderRadius.circular(20),
+                    side: changed ? BorderSide(color: context.cs.primary, width: 1.4) : BorderSide.none,
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
@@ -176,7 +177,7 @@ class _EditorState extends ConsumerState<_Editor> {
                             changed
                                 ? 'Was ${_isPrice ? money(_current(item)) : qtyWithUnit(_current(item), item.unit)}'
                                 : 'PLU ${item.plu}',
-                            style: TextStyle(fontSize: 12.5, color: changed ? AppColors.primary : AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12.5, color: changed ? context.cs.primary : context.cs.onSurfaceVariant),
                           ),
                         ]),
                       ),

@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_theme.dart';
 import '../models/branch.dart';
 import '../providers/branch_provider.dart';
 
-/// The current branch name with a chevron; tapping it lets the user switch
-/// branch. Every screen shows data for the chosen branch.
-class BranchSwitcher extends ConsumerWidget {
-  const BranchSwitcher({super.key});
+/// A tonal chip with the current branch; tapping it lets the user switch.
+/// Every screen shows data for the chosen branch.
+class BranchChip extends ConsumerWidget {
+  const BranchChip({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final branch = ref.watch(currentBranchProvider);
-    final branches = ref.watch(branchesProvider).value ?? const <Branch>[];
-    final canSwitch = branches.length > 1;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: canSwitch ? () => showBranchPicker(context, ref) : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+    final many = (ref.watch(branchesProvider).value?.length ?? 0) > 1;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 190),
+      child: FilledButton.tonal(
+        onPressed: many ? () => showBranchPicker(context, ref) : null,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 40),
+          padding: const EdgeInsets.only(left: 12, right: 8),
+          disabledBackgroundColor: context.cs.secondaryContainer,
+          disabledForegroundColor: context.cs.onSecondaryContainer,
+          textStyle: context.tt.labelLarge,
+        ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.storefront_rounded, size: 16, color: AppColors.primary),
+          const Icon(Icons.storefront_rounded, size: 18),
           const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              branch?.name ?? 'No branch',
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primary),
-            ),
-          ),
-          if (canSwitch) const Icon(Icons.expand_more_rounded, size: 18, color: AppColors.primary),
+          Flexible(child: Text(branch?.name ?? 'No branch', overflow: TextOverflow.ellipsis)),
+          if (many) const Icon(Icons.arrow_drop_down_rounded, size: 22) else const SizedBox(width: 4),
         ]),
       ),
     );
@@ -49,43 +47,32 @@ Future<void> showBranchPicker(BuildContext context, WidgetRef ref) async {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-            child: Text('Choose branch', style: Theme.of(ctx).textTheme.titleLarge),
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+            child: Text('Choose branch', style: ctx.tt.headlineSmall),
           ),
           for (final b in branches)
-            ListTile(
-              leading: CircleAvatar(
-                backgroundColor: b.id == current?.id ? AppColors.primary : AppColors.primarySoft,
-                foregroundColor: b.id == current?.id ? Colors.white : AppColors.primary,
-                child: const Icon(Icons.storefront_rounded, size: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+              child: ListTile(
+                selected: b.id == current?.id,
+                selectedTileColor: ctx.cs.secondaryContainer,
+                selectedColor: ctx.cs.onSecondaryContainer,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                leading: const Icon(Icons.storefront_rounded),
+                title: Text(b.name),
+                subtitle: Text(
+                  b.scaleCount == 0
+                      ? 'No scales'
+                      : '${b.onlineScaleCount} of ${b.scaleCount} ${b.scaleCount == 1 ? 'scale' : 'scales'} online',
+                ),
+                trailing: b.id == current?.id ? const Icon(Icons.check_circle_rounded) : null,
+                onTap: () => Navigator.pop(ctx, b),
               ),
-              title: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(
-                b.scaleCount == 0
-                    ? 'No scales'
-                    : '${b.onlineScaleCount} of ${b.scaleCount} ${b.scaleCount == 1 ? 'scale' : 'scales'} online',
-              ),
-              trailing: b.id == current?.id ? const Icon(Icons.check_rounded, color: AppColors.primary) : null,
-              onTap: () => Navigator.pop(ctx, b),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
         ],
       ),
     ),
   );
   if (picked != null) ref.read(selectedBranchIdProvider.notifier).select(picked.id);
-}
-
-/// The two-line app bar title used on the main tabs: screen name above the
-/// branch switcher.
-class BranchTitle extends StatelessWidget {
-  const BranchTitle(this.title, {super.key});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [Text(title), const BranchSwitcher()],
-      );
 }

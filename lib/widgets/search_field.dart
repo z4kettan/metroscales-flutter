@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A Material 3 search bar that reports what the user types.
 class SearchField extends StatefulWidget {
   const SearchField({super.key, required this.onChanged, this.hint = 'Search', this.trailing});
 
@@ -21,27 +22,30 @@ class _SearchFieldState extends State<SearchField> {
   }
 
   @override
-  Widget build(BuildContext context) => TextField(
+  Widget build(BuildContext context) => SearchBar(
         controller: _controller,
+        hintText: widget.hint,
+        elevation: const WidgetStatePropertyAll(0),
+        constraints: const BoxConstraints(minHeight: 54),
+        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+        leading: const Icon(Icons.search_rounded),
         onChanged: (v) {
           setState(() {});
           widget.onChanged(v);
         },
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          prefixIcon: const Icon(Icons.search_rounded),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          suffixIcon: _controller.text.isEmpty
-              ? widget.trailing
-              : IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                  onPressed: () {
-                    _controller.clear();
-                    setState(() {});
-                    widget.onChanged('');
-                  },
-                ),
-        ),
+        trailing: [
+          if (_controller.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.close_rounded),
+              tooltip: 'Clear',
+              onPressed: () {
+                _controller.clear();
+                setState(() {});
+                widget.onChanged('');
+              },
+            )
+          else
+            ?widget.trailing,
+        ],
       );
 }

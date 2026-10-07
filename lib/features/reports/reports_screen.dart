@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../core/utils/format.dart';
 import '../../models/sales.dart';
 import '../../providers/branch_provider.dart';
 import '../../providers/data_providers.dart';
 import '../../widgets/async_view.dart';
-import '../../widgets/branch_switcher.dart';
+import '../../widgets/tab_page.dart';
 import '../../widgets/section_card.dart';
 import 'csv_export.dart';
 import 'sales_chart.dart';
@@ -97,53 +97,52 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final daily = ref.watch(dailySalesProvider(_range));
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 64,
-        title: const BranchTitle('Reports'),
-        actions: [
-          IconButton(tooltip: 'Share as Excel (CSV)', icon: const Icon(Icons.ios_share_rounded), onPressed: _export),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(itemSalesProvider(_range));
-          return ref.refresh(dailySalesProvider(_range).future);
-        },
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          children: [
-            SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final (p, label) in [
-                    (_Preset.today, 'Today'),
-                    (_Preset.yesterday, 'Yesterday'),
-                    (_Preset.week, 'Last 7 days'),
-                    (_Preset.month, 'This month'),
-                    (_Preset.custom, 'Custom'),
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(label),
-                        avatar: p == _Preset.custom ? const Icon(Icons.date_range_rounded, size: 16) : null,
-                        selected: _preset == p,
-                        onSelected: (_) => _select(p),
-                        labelStyle: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: _preset == p ? AppColors.primaryDark : AppColors.textSecondary,
-                        ),
-                      ),
+    return TabPage(
+      title: 'Reports',
+      onRefresh: () {
+        ref.invalidate(itemSalesProvider(_range));
+        return ref.refresh(dailySalesProvider(_range).future);
+      },
+      actions: [
+        IconButton(tooltip: 'Share as Excel (CSV)', icon: const Icon(Icons.ios_share_rounded), onPressed: _export),
+      ],
+      slivers: [
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                for (final (p, label) in [
+                  (_Preset.today, 'Today'),
+                  (_Preset.yesterday, 'Yesterday'),
+                  (_Preset.week, 'Last 7 days'),
+                  (_Preset.month, 'This month'),
+                  (_Preset.custom, 'Custom'),
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(label),
+                      avatar: p == _Preset.custom && _preset != p ? const Icon(Icons.date_range_rounded, size: 18) : null,
+                      selected: _preset == p,
+                      onSelected: (_) => _select(p),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
+          ),
+        ),
+        SliverPagePadding(
+          sliver: SliverList.list(children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(4, 10, 4, 10),
-              child: Text(_rangeLabel, style: Theme.of(context).textTheme.bodySmall),
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
+              child: Row(children: [
+                Icon(Icons.event_rounded, size: 18, color: context.cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(_rangeLabel, style: context.tt.labelLarge?.copyWith(color: context.cs.onSurfaceVariant)),
+              ]),
             ),
             AsyncView(
               value: daily,
@@ -154,31 +153,31 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   const SizedBox(height: 12),
                   SectionCard(
                     title: 'Sales by day',
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
+                    icon: Icons.bar_chart_rounded,
+                    padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
                     child: SalesBarChart(
                       days: days,
-                      height: 160,
+                      height: 170,
                       onTap: (d) => context.push('/bills?date=${isoDay(d.date)}'),
                     ),
                   ),
                 ],
               ]),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             SegmentedButton<bool>(
-              showSelectedIcon: false,
               segments: const [
                 ButtonSegment(value: false, label: Text('By day'), icon: Icon(Icons.calendar_view_day_rounded)),
-                ButtonSegment(value: true, label: Text('By item'), icon: Icon(Icons.inventory_2_outlined)),
+                ButtonSegment(value: true, label: Text('By item'), icon: Icon(Icons.inventory_2_rounded)),
               ],
               selected: {_byItem},
               onSelectionChanged: (s) => setState(() => _byItem = s.first),
             ),
             const SizedBox(height: 12),
             if (_byItem) _ItemTable(range: _range) else _DayTable(days: daily.value),
-          ],
+          ]),
         ),
-      ),
+      ],
     );
   }
 }
@@ -189,45 +188,64 @@ class _Totals extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
     final total = days.fold<double>(0, (s, d) => s + d.total);
     final bills = days.fold<int>(0, (s, d) => s + d.bills);
     final discount = days.fold<double>(0, (s, d) => s + d.discount);
     final tax = days.fold<double>(0, (s, d) => s + d.tax);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Total sales', style: TextStyle(color: AppColors.textSecondary)),
-          const SizedBox(height: 4),
-          FittedBox(
-            child: Text(money(total),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 30, letterSpacing: -0.6)),
-          ),
-          const SizedBox(height: 16),
-          Row(children: [
-            _Metric('Bills', '$bills'),
-            _Metric('Average bill', moneyCompact(bills == 0 ? 0 : (total / bills).roundToDouble())),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Card(
+        color: cs.primary,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Total sales', style: context.tt.titleMedium?.copyWith(color: cs.onPrimary.withValues(alpha: 0.85))),
+            const SizedBox(height: 6),
+            FittedBox(child: Text(money(total), style: context.tt.displaySmall?.copyWith(color: cs.onPrimary, fontSize: 40))),
           ]),
-          const SizedBox(height: 12),
-          Row(children: [_Metric('Discount', money(discount)), _Metric('GST', money(tax))]),
-        ]),
+        ),
       ),
-    );
+      const SizedBox(height: 10),
+      Row(children: [
+        _Metric(Icons.receipt_long_rounded, 'Bills', '$bills', cs.secondaryContainer, cs.onSecondaryContainer),
+        const SizedBox(width: 10),
+        _Metric(Icons.functions_rounded, 'Average bill', moneyCompact(bills == 0 ? 0 : (total / bills).roundToDouble()),
+            cs.tertiaryContainer, cs.onTertiaryContainer),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        _Metric(Icons.local_offer_rounded, 'Discount', money(discount), cs.surfaceContainerHigh, cs.onSurface),
+        const SizedBox(width: 10),
+        _Metric(Icons.account_balance_rounded, 'GST', money(tax), cs.surfaceContainerHigh, cs.onSurface),
+      ]),
+    ]);
   }
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric(this.label, this.value);
+  const _Metric(this.icon, this.label, this.value, this.bg, this.fg);
+  final IconData icon;
   final String label;
   final String value;
+  final Color bg;
+  final Color fg;
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
-          const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        ]),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(22)),
+          child: Row(children: [
+            Icon(icon, color: fg),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                FittedBox(child: Text(value, style: context.tt.titleMedium?.copyWith(color: fg))),
+                Text(label, style: TextStyle(color: fg.withValues(alpha: 0.8), fontSize: 12.5, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+          ]),
+        ),
       );
 }
 
@@ -251,7 +269,7 @@ class _DayTable extends StatelessWidget {
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               Text(money(d.total), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
               const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded, color: d.bills == 0 ? Colors.transparent : AppColors.textMuted),
+              Icon(Icons.chevron_right_rounded, color: d.bills == 0 ? Colors.transparent : context.cs.outline),
             ]),
           ),
         ],
@@ -272,10 +290,10 @@ class _ItemTable extends ConsumerWidget {
       onRetry: () => ref.invalidate(itemSalesProvider(range)),
       builder: (list) {
         if (list.isEmpty) {
-          return const Card(
+          return Card(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('No items sold in this period', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('No items sold in this period', textAlign: TextAlign.center, style: TextStyle(color: context.cs.onSurfaceVariant)),
             ),
           );
         }
@@ -291,13 +309,13 @@ class _ItemTable extends ConsumerWidget {
                   Row(children: [
                     SizedBox(
                       width: 26,
-                      child: Text('${i + 1}', style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                      child: Text('${i + 1}', style: TextStyle(color: context.cs.outline, fontWeight: FontWeight.w600)),
                     ),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(r.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                         Text('${qtyWithUnit(r.quantity, r.unit)} · PLU ${r.plu}',
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                            style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 12.5)),
                       ]),
                     ),
                     Text(money(r.amount), style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -310,8 +328,8 @@ class _ItemTable extends ConsumerWidget {
                       child: LinearProgressIndicator(
                         value: max == 0 ? 0 : r.amount / max,
                         minHeight: 5,
-                        color: AppColors.primary,
-                        backgroundColor: AppColors.divider,
+                        color: context.cs.primary,
+                        backgroundColor: context.cs.outlineVariant,
                       ),
                     ),
                   ),

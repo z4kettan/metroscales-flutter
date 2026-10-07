@@ -1,30 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../widgets/brand_mark.dart';
 
-/// The five main tabs.
+const _destinations = [
+  (Icons.space_dashboard_outlined, Icons.space_dashboard_rounded, 'Home'),
+  (Icons.inventory_2_outlined, Icons.inventory_2_rounded, 'Items'),
+  (Icons.scale_outlined, Icons.scale_rounded, 'Scales'),
+  (Icons.insights_outlined, Icons.insights_rounded, 'Reports'),
+  (Icons.widgets_outlined, Icons.widgets_rounded, 'More'),
+];
+
+/// The five main tabs: a navigation bar on phones and a navigation rail on
+/// tablets and wide windows.
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.shell});
   final StatefulNavigationShell shell;
 
+  void _go(int i) => shell.goBranch(i, initialLocation: i == shell.currentIndex);
+
   @override
   Widget build(BuildContext context) {
+    final wide = MediaQuery.sizeOf(context).width >= 720;
+    if (wide) {
+      return Scaffold(
+        body: Row(children: [
+          NavigationRail(
+            selectedIndex: shell.currentIndex,
+            onDestinationSelected: _go,
+            labelType: NavigationRailLabelType.all,
+            groupAlignment: -0.85,
+            leading: const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: BrandMark(size: 44)),
+            destinations: [
+              for (final (icon, selected, label) in _destinations)
+                NavigationRailDestination(icon: Icon(icon), selectedIcon: Icon(selected), label: Text(label)),
+            ],
+          ),
+          Expanded(child: shell),
+        ]),
+      );
+    }
     return Scaffold(
       body: shell,
-      bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-        child: NavigationBar(
-          selectedIndex: shell.currentIndex,
-          onDestinationSelected: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded), label: 'Home'),
-            NavigationDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2_rounded), label: 'Items'),
-            NavigationDestination(icon: Icon(Icons.scale_outlined), selectedIcon: Icon(Icons.scale_rounded), label: 'Scales'),
-            NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights_rounded), label: 'Reports'),
-            NavigationDestination(icon: Icon(Icons.menu_rounded), selectedIcon: Icon(Icons.menu_rounded), label: 'More'),
-          ],
-        ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: shell.currentIndex,
+        onDestinationSelected: _go,
+        destinations: [
+          for (final (icon, selected, label) in _destinations)
+            NavigationDestination(icon: Icon(icon), selectedIcon: Icon(selected), label: label),
+        ],
       ),
     );
   }

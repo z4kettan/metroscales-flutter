@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/format.dart';
 import '../../models/branch.dart';
 import '../../models/sales.dart';
@@ -26,6 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   DateTime _date = dateOnly(DateTime.now());
 
   DateRange get _week => (from: _date.subtract(const Duration(days: 6)), to: _date);
+  bool get _isToday => _date == dateOnly(DateTime.now());
 
   Future<void> _refresh() async {
     ref.invalidate(branchesProvider);
@@ -47,8 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _shiftDay(int days) {
     final next = _date.add(Duration(days: days));
-    if (next.isAfter(dateOnly(DateTime.now()))) return;
-    setState(() => _date = next);
+    if (!next.isAfter(dateOnly(DateTime.now()))) setState(() => _date = next);
   }
 
   @override
@@ -60,7 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (branches.hasValue && branch == null) {
       return const Scaffold(
         body: EmptyState(
-          icon: Icons.storefront_outlined,
+          icon: Icons.storefront_rounded,
           title: 'No branch yet',
           message: 'Your dealer has not set up a branch for your account. Contact them to get started.',
         ),
@@ -70,49 +70,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final summary = branch == null ? null : ref.watch(daySummaryProvider(_date));
     final week = branch == null ? null : ref.watch(dailySalesProvider(_week));
     final bills = branch == null ? null : ref.watch(dayBillsProvider(_date));
-    final isToday = _date == dateOnly(DateTime.now());
 
     return Scaffold(
       body: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
               _Header(name: user?.name ?? '', shop: user?.customerName),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               _DateBar(
                 label: friendlyDay(_date),
                 onPrev: () => _shiftDay(-1),
-                onNext: isToday ? null : () => _shiftDay(1),
+                onNext: _isToday ? null : () => _shiftDay(1),
                 onPick: _pickDate,
               ),
+              const SizedBox(height: 16),
+              _SalesHero(
+                summary: summary?.value,
+                loading: summary?.isLoading ?? true,
+                error: summary?.error,
+                onTap: () => context.push('/bills?date=${isoDay(_date)}'),
+              ),
               const SizedBox(height: 12),
-              _SalesHero(summary: summary?.value, loading: summary?.isLoading ?? true, error: summary?.error, onTap: () => context.push('/bills?date=${isoDay(_date)}')),
+              _StatRow(summary: summary?.value),
               const SizedBox(height: 12),
               if (branch != null) _ScalesStatus(branch: branch),
+              const SectionLabel('Quick actions'),
+              _QuickActions(canManage: user?.canManage ?? false),
               const SizedBox(height: 12),
               SectionCard(
                 title: 'Last 7 days',
+                icon: Icons.bar_chart_rounded,
                 trailing: TextButton(onPressed: () => context.go('/reports'), child: const Text('Reports')),
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 18),
                 child: SizedBox(
-                  height: 150,
+                  height: 180,
                   child: switch (week) {
                     AsyncData(:final value) => SalesBarChart(
                         days: value,
                         selected: _date,
+                        height: 180,
                         onTap: (d) => setState(() => _date = dateOnly(d.date)),
                       ),
-                    AsyncError() => const Center(child: Text('Could not load', style: TextStyle(color: AppColors.textSecondary))),
-                    _ => const Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+                    AsyncError() => Center(
+                        child: Text('Could not load', style: TextStyle(color: context.cs.onSurfaceVariant)),
+                      ),
+                    _ => const Center(child: CircularProgressIndicator()),
                   },
                 ),
               ),
-              const SectionLabel('Quick actions'),
-              _QuickActions(canManage: user?.canManage ?? false),
-              const SectionLabel('Bills'),
-              _RecentBills(bills: bills, date: _date),
+              SectionLabel(
+                'Bills',
+                trailing: TextButton(
+                  onPressed: () => context.push('/bills?date=${isoDay(_date)}'),
+                  child: const Text('See all'),
+                ),
+              ),
+              _RecentBills(bills: bills),
             ],
           ),
         ),
@@ -135,54 +152,36 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(
-            shop ?? _greeting,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          const BranchSwitcherLarge(),
-        ]),
-      ),
-      InkWell(
-        customBorder: const CircleBorder(),
-        onTap: () => context.push('/profile'),
-        child: CircleAvatar(
-          radius: 22,
-          backgroundColor: AppColors.primarySoft,
-          foregroundColor: AppColors.primaryDark,
-          child: Text(initials(name), style: const TextStyle(fontWeight: FontWeight.w700)),
+    final cs = context.cs;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('$_greeting, $name', style: context.tt.bodyLarge?.copyWith(color: cs.onSurfaceVariant)),
+            const SizedBox(height: 2),
+            Text(
+              shop ?? 'Metro Scales',
+              style: context.tt.headlineMedium,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ]),
         ),
-      ),
-    ]);
-  }
-}
-
-/// The branch name as the page heading, tappable to switch.
-class BranchSwitcherLarge extends ConsumerWidget {
-  const BranchSwitcherLarge({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final branch = ref.watch(currentBranchProvider);
-    final many = (ref.watch(branchesProvider).value?.length ?? 0) > 1;
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: many ? () => showBranchPicker(context, ref) : null,
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Flexible(
-          child: Text(
-            branch?.name ?? ' ',
-            style: Theme.of(context).textTheme.headlineSmall,
-            overflow: TextOverflow.ellipsis,
+        const SizedBox(width: 12),
+        InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => context.push('/profile'),
+          child: CircleAvatar(
+            radius: 24,
+            backgroundColor: cs.tertiaryContainer,
+            foregroundColor: cs.onTertiaryContainer,
+            child: Text(initials(name), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
           ),
         ),
-        if (many) const Icon(Icons.expand_more_rounded, color: AppColors.textSecondary),
       ]),
-    );
+      const SizedBox(height: 12),
+      const BranchChip(),
+    ]);
   }
 }
 
@@ -194,28 +193,20 @@ class _DateBar extends StatelessWidget {
   final VoidCallback onPick;
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: SizedBox(
-        height: 48,
-        child: Row(children: [
-          IconButton(onPressed: onPrev, icon: const Icon(Icons.chevron_left_rounded), tooltip: 'Previous day'),
-          Expanded(
-            child: InkWell(
-              onTap: onPick,
-              borderRadius: BorderRadius.circular(8),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-              ]),
-            ),
+  Widget build(BuildContext context) => Row(children: [
+        IconButton.filledTonal(onPressed: onPrev, icon: const Icon(Icons.chevron_left_rounded), tooltip: 'Previous day'),
+        const SizedBox(width: 4),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onPick,
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+            icon: const Icon(Icons.calendar_month_rounded, size: 20),
+            label: Text(label),
           ),
-          IconButton(onPressed: onNext, icon: const Icon(Icons.chevron_right_rounded), tooltip: 'Next day'),
-        ]),
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 4),
+        IconButton.filledTonal(onPressed: onNext, icon: const Icon(Icons.chevron_right_rounded), tooltip: 'Next day'),
+      ]);
 }
 
 class _SalesHero extends StatelessWidget {
@@ -227,72 +218,119 @@ class _SalesHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = summary;
-    return Material(
-      color: Colors.transparent,
+    final cs = context.cs;
+    return Card(
+      color: cs.primary,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Ink(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F766E), Color(0xFF134E4A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        child: Stack(children: [
+          Positioned(
+            right: -30,
+            bottom: -40,
+            child: Icon(Icons.scale_rounded, size: 170, color: cs.onPrimary.withValues(alpha: 0.08)),
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Text('Total sales', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
-              const Spacer(),
-              Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white.withValues(alpha: 0.8)),
-            ]),
-            const SizedBox(height: 6),
-            SizedBox(
-              height: 42,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: error != null
-                    ? Text('Could not load', style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 16))
-                    : loading && s == null
-                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
-                        : FittedBox(
-                            child: Text(
-                              money(s?.total),
-                              style: const TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Text('Total sales', style: context.tt.titleMedium?.copyWith(color: cs.onPrimary.withValues(alpha: 0.85))),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: cs.onPrimary.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  child: Icon(Icons.arrow_outward_rounded, size: 18, color: cs.onPrimary),
+                ),
+              ]),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 52,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: error != null
+                      ? Text('Could not load', style: TextStyle(color: cs.onPrimary, fontSize: 18))
+                      : loading && summary == null
+                          ? SizedBox(width: 26, height: 26, child: CircularProgressIndicator(color: cs.onPrimary))
+                          : FittedBox(
+                              child: Text(
+                                money(summary?.total),
+                                style: context.tt.displaySmall?.copyWith(color: cs.onPrimary, fontSize: 42),
+                              ),
                             ),
-                          ),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Container(height: 1, color: Colors.white.withValues(alpha: 0.15)),
-            const SizedBox(height: 14),
-            Row(children: [
-              _HeroStat(label: 'Bills', value: '${s?.bills ?? 0}'),
-              _HeroStat(label: 'Discount', value: moneyCompact(s?.discount)),
-              _HeroStat(label: 'GST', value: moneyCompact(s?.tax)),
+              const SizedBox(height: 6),
+              Text(
+                summary == null
+                    ? ' '
+                    : summary!.bills == 0
+                        ? 'No bills yet'
+                        : 'Average bill ${moneyCompact((summary!.total / summary!.bills).roundToDouble())}',
+                style: TextStyle(color: cs.onPrimary.withValues(alpha: 0.85), fontWeight: FontWeight.w600),
+              ),
             ]),
-          ]),
-        ),
+          ),
+        ]),
       ),
     );
   }
 }
 
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({required this.label, required this.value});
+class _StatRow extends StatelessWidget {
+  const _StatRow({required this.summary});
+  final DaySales? summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = context.cs;
+    final s = summary;
+    return Row(children: [
+      _StatTile(
+        icon: Icons.receipt_long_rounded,
+        label: 'Bills',
+        value: '${s?.bills ?? 0}',
+        bg: cs.secondaryContainer,
+        fg: cs.onSecondaryContainer,
+      ),
+      const SizedBox(width: 10),
+      _StatTile(
+        icon: Icons.local_offer_rounded,
+        label: 'Discount',
+        value: moneyCompact(s?.discount),
+        bg: cs.tertiaryContainer,
+        fg: cs.onTertiaryContainer,
+      ),
+      const SizedBox(width: 10),
+      _StatTile(
+        icon: Icons.account_balance_rounded,
+        label: 'GST',
+        value: moneyCompact(s?.tax),
+        bg: cs.surfaceContainerHigh,
+        fg: cs.onSurface,
+      ),
+    ]);
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.icon, required this.label, required this.value, required this.bg, required this.fg});
+  final IconData icon;
   final String label;
   final String value;
+  final Color bg;
+  final Color fg;
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12.5)),
-          const SizedBox(height: 3),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16)),
-        ]),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(22)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(icon, color: fg, size: 22),
+            const SizedBox(height: 14),
+            FittedBox(child: Text(value, style: context.tt.titleLarge?.copyWith(color: fg))),
+            Text(label, style: TextStyle(color: fg.withValues(alpha: 0.8), fontWeight: FontWeight.w600, fontSize: 13)),
+          ]),
+        ),
       );
 }
 
@@ -302,26 +340,23 @@ class _ScalesStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.status;
+    final cs = context.cs;
     final total = branch.scaleCount;
     final online = branch.onlineScaleCount;
     final allOnline = total > 0 && online == total;
-    final color = total == 0 ? AppColors.textSecondary : (allOnline ? AppColors.success : AppColors.warning);
-    final soft = total == 0 ? AppColors.divider : (allOnline ? AppColors.successSoft : AppColors.warningSoft);
+    final (bg, fg) = total == 0
+        ? (cs.surfaceContainerHighest, cs.onSurfaceVariant)
+        : allOnline
+            ? (s.successContainer, s.onSuccessContainer)
+            : (s.warningContainer, s.onWarningContainer);
 
     return Card(
       child: ListTile(
         onTap: () => context.go('/scales'),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(color: soft, borderRadius: BorderRadius.circular(10)),
-          child: Icon(Icons.scale_rounded, color: color, size: 22),
-        ),
-        title: Text(
-          total == 0 ? 'No scales in this branch' : '$online of $total ${total == 1 ? 'scale' : 'scales'} online',
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: IconBox(Icons.scale_rounded, background: bg, foreground: fg, size: 48),
+        title: Text(total == 0 ? 'No scales in this branch' : '$online of $total ${total == 1 ? 'scale' : 'scales'} online'),
         subtitle: Text(
           total == 0
               ? 'Ask your dealer to register your scale'
@@ -342,30 +377,31 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = [
-      if (canManage) (Icons.sell_outlined, 'Update prices', '/prices'),
-      (Icons.inventory_outlined, 'Update stock', '/stock'),
-      (Icons.local_shipping_outlined, 'Purchase', '/purchase/new'),
-      if (canManage) (Icons.add_box_outlined, 'Add item', '/item'),
+      if (canManage) (Icons.sell_rounded, 'Prices', '/prices'),
+      (Icons.inventory_rounded, 'Stock', '/stock'),
+      (Icons.local_shipping_rounded, 'Purchase', '/purchase/new'),
+      if (canManage) (Icons.add_rounded, 'New item', '/item'),
     ];
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 2.6,
+    final cs = context.cs;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         for (final (icon, label, path) in actions)
-          Card(
+          Expanded(
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(20),
               onTap: () => context.push(path),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(children: [
-                  Icon(icon, color: AppColors.primary, size: 22),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(22)),
+                    child: Icon(icon, color: cs.onPrimaryContainer, size: 28),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(label, style: context.tt.labelLarge, textAlign: TextAlign.center),
                 ]),
               ),
             ),
@@ -376,50 +412,41 @@ class _QuickActions extends StatelessWidget {
 }
 
 class _RecentBills extends StatelessWidget {
-  const _RecentBills({required this.bills, required this.date});
+  const _RecentBills({required this.bills});
   final AsyncValue<List<Bill>>? bills;
-  final DateTime date;
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
     if (bills?.hasError ?? false) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Could not load bills. Pull down to retry.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary)),
+          padding: const EdgeInsets.all(24),
+          child: Text('Could not load bills. Pull down to retry.', textAlign: TextAlign.center, style: TextStyle(color: cs.onSurfaceVariant)),
         ),
       );
     }
     final list = bills?.value;
     if (list == null) {
-      return const Card(child: SizedBox(height: 80, child: Center(child: CircularProgressIndicator(strokeWidth: 2.4))));
+      return const Card(child: SizedBox(height: 96, child: Center(child: CircularProgressIndicator())));
     }
     if (list.isEmpty) {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
           child: Column(children: [
-            Icon(Icons.receipt_long_outlined, color: AppColors.textMuted, size: 28),
-            SizedBox(height: 8),
-            Text('No bills on this day', style: TextStyle(color: AppColors.textSecondary)),
+            Icon(Icons.receipt_long_rounded, color: cs.outline, size: 32),
+            const SizedBox(height: 8),
+            Text('No bills on this day', style: TextStyle(color: cs.onSurfaceVariant)),
           ]),
         ),
       );
     }
-    final shown = list.take(5).toList();
     return Card(
-      clipBehavior: Clip.antiAlias,
       child: Column(children: [
-        for (final (i, b) in shown.indexed) ...[
-          if (i > 0) const Divider(indent: 72),
+        for (final (i, b) in list.take(5).indexed) ...[
+          if (i > 0) const Divider(indent: 72, endIndent: 16),
           BillTile(b),
-        ],
-        if (list.length > shown.length) ...[
-          const Divider(),
-          TextButton(
-            onPressed: () => context.push('/bills?date=${isoDay(date)}'),
-            child: Text('See all ${list.length} bills'),
-          ),
         ],
       ]),
     );
