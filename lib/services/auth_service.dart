@@ -7,8 +7,8 @@ class AuthService {
   final ApiClient _api;
   final TokenService _tokens;
 
-  Future<AppUser> login(String email, String pin) async {
-    final data = await _api.post('/auth/login', body: {'email': email.trim(), 'secret': pin}, auth: false)
+  Future<AppUser> login(String username, String password) async {
+    final data = await _api.post('/auth/login', body: {'username': username.trim(), 'secret': password}, auth: false)
         as Map<String, dynamic>;
     await _tokens.saveTokens(
       accessToken: data['accessToken'] as String,
@@ -23,7 +23,7 @@ class AuthService {
         await _api.patch('/auth/me', body: {'name': ?name, 'email': ?email}) as Map<String, dynamic>,
       );
 
-  Future<void> changePin(String current, String next) =>
+  Future<void> changePassword(String current, String next) =>
       _api.post('/auth/change-secret', body: {'currentSecret': current, 'newSecret': next});
 
   Future<void> logout() async {

@@ -47,7 +47,7 @@ class MoreScreen extends ConsumerWidget {
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text(user.name, style: context.tt.titleLarge?.copyWith(color: cs.onPrimaryContainer)),
                           const SizedBox(height: 2),
-                          Text(user.email, style: TextStyle(color: cs.onPrimaryContainer.withValues(alpha: 0.8))),
+                          Text('@${user.username}', style: TextStyle(color: cs.onPrimaryContainer.withValues(alpha: 0.8))),
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -81,7 +81,7 @@ class MoreScreen extends ConsumerWidget {
             const SectionLabel('Appearance'),
             const _AppearanceCard(),
             const SectionLabel('Account'),
-            const _Group([_Entry(Icons.person_rounded, 'Profile and PIN', 'Your name, email and PIN', '/profile')]),
+            const _Group([_Entry(Icons.person_rounded, 'Profile and password', 'Your name, email and password', '/profile')]),
             const SizedBox(height: 24),
             FilledButton.tonalIcon(
               style: FilledButton.styleFrom(
@@ -95,7 +95,7 @@ class MoreScreen extends ConsumerWidget {
                 final ok = await confirm(
                   context,
                   title: 'Sign out?',
-                  message: 'You will need your email and PIN to sign in again.',
+                  message: 'You will need your username and password to sign in again.',
                   confirmLabel: 'Sign out',
                   icon: Icons.logout_rounded,
                 );

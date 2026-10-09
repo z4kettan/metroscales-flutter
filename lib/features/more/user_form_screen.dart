@@ -25,8 +25,8 @@ class UserFormScreen extends ConsumerStatefulWidget {
 class _UserFormScreenState extends ConsumerState<UserFormScreen> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.user?.name);
-  late final _email = TextEditingController(text: widget.user?.email);
-  final _pin = TextEditingController();
+  late final _username = TextEditingController(text: widget.user?.username);
+  final _password = TextEditingController();
   late bool _owner = widget.user?.role == UserRole.owner;
   late bool _active = widget.user?.isActive ?? true;
   late final Set<String> _branchIds = {...?widget.user?.branches.map((b) => b.id)};
@@ -37,8 +37,8 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
   @override
   void dispose() {
     _name.dispose();
-    _email.dispose();
-    _pin.dispose();
+    _username.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -56,8 +56,8 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
         await service.update(
           widget.user!.id,
           name: _name.text.trim(),
-          email: _email.text.trim(),
-          pin: _pin.text.isEmpty ? null : _pin.text,
+          username: _username.text.trim(),
+          password: _password.text.isEmpty ? null : _password.text,
           role: role,
           branchIds: _branchIds.toList(),
           isActive: _active,
@@ -65,15 +65,15 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
       } else {
         await service.create(
           name: _name.text.trim(),
-          email: _email.text.trim(),
-          pin: _pin.text,
+          username: _username.text.trim(),
+          password: _password.text,
           role: role,
           branchIds: _branchIds.toList(),
         );
       }
       ref.invalidate(usersProvider);
       if (!mounted) return;
-      AppToast.success(context, _editing ? 'User saved' : 'User added. Share their email and PIN with them.');
+      AppToast.success(context, _editing ? 'User saved' : 'User added. Share their username and password with them.');
       context.pop();
     } catch (e) {
       if (mounted) AppToast.error(context, e);
@@ -107,24 +107,25 @@ class _UserFormScreenState extends ConsumerState<UserFormScreen> {
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email', helperText: 'Used to sign in'),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                  controller: _username,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9._-]'))],
+                  decoration: const InputDecoration(labelText: 'Username', helperText: 'Used to sign in'),
+                  validator: (v) => (v == null || v.trim().length < 3) ? 'Use at least 3 letters or digits' : null,
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
-                  controller: _pin,
-                  keyboardType: TextInputType.number,
-                  obscureText: true,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(8)],
+                  controller: _password,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   decoration: InputDecoration(
-                    labelText: _editing ? 'New PIN' : 'PIN',
-                    helperText: _editing ? 'Leave empty to keep the current PIN' : '4 to 8 digits',
+                    labelText: _editing ? 'New password' : 'Password',
+                    helperText: _editing ? 'Leave empty to keep the current password' : 'At least 6 characters',
                   ),
                   validator: (v) {
                     if (_editing && (v == null || v.isEmpty)) return null;
-                    return (v == null || v.length < 4) ? 'PIN must be 4 to 8 digits' : null;
+                    return (v == null || v.length < 6) ? 'Use at least 6 characters' : null;
                   },
                 ),
               ]),

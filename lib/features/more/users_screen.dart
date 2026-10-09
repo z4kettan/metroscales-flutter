@@ -60,8 +60,8 @@ class UsersScreen extends ConsumerWidget {
                       ]),
                       subtitle: Text(
                         u.role == UserRole.owner
-                            ? '${u.email}\nOwner · all branches'
-                            : '${u.email}\nStaff · ${u.branches.isEmpty ? 'no branches' : u.branches.map((b) => b.name).join(', ')}',
+                            ? '@${u.username}\nOwner · all branches'
+                            : '@${u.username}\nStaff · ${u.branches.isEmpty ? 'no branches' : u.branches.map((b) => b.name).join(', ')}',
                       ),
                       isThreeLine: true,
                       trailing: Icon(Icons.chevron_right_rounded, color: context.cs.outline),

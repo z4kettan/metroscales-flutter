@@ -18,14 +18,16 @@ String roleName(UserRole r) => switch (r) {
 class AppUser {
   final String id;
   final String name;
-  final String email;
+  final String username;
+  final String? email;
   final UserRole role;
   final String? customerName;
 
   const AppUser({
     required this.id,
     required this.name,
-    required this.email,
+    required this.username,
+    this.email,
     required this.role,
     this.customerName,
   });
@@ -36,7 +38,8 @@ class AppUser {
   factory AppUser.fromJson(Map<String, dynamic> j) => AppUser(
         id: j['id'] as String,
         name: j['name'] as String? ?? '',
-        email: j['email'] as String? ?? '',
+        username: j['username'] as String? ?? '',
+        email: j['email'] as String?,
         role: parseRole(j['role'] as String?),
         customerName: (j['customer'] as Map<String, dynamic>?)?['name'] as String?,
       );
@@ -46,7 +49,8 @@ class AppUser {
 class ShopUser {
   final String id;
   final String name;
-  final String email;
+  final String username;
+  final String? email;
   final UserRole role;
   final bool isActive;
   final List<({String id, String name})> branches;
@@ -54,7 +58,8 @@ class ShopUser {
   const ShopUser({
     required this.id,
     required this.name,
-    required this.email,
+    required this.username,
+    this.email,
     required this.role,
     required this.isActive,
     required this.branches,
@@ -63,7 +68,8 @@ class ShopUser {
   factory ShopUser.fromJson(Map<String, dynamic> j) => ShopUser(
         id: j['id'] as String,
         name: j['name'] as String? ?? '',
-        email: j['email'] as String? ?? '',
+        username: j['username'] as String? ?? '',
+        email: j['email'] as String?,
         role: parseRole(j['role'] as String?),
         isActive: j['isActive'] as bool? ?? true,
         branches: [for (final b in mapList(j['branches'])) (id: b['id'] as String, name: b['name'] as String)],

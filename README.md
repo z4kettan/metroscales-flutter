@@ -17,7 +17,7 @@ The Flutter app for shop owners and staff. It works with the Metro Scales API
   item, shared as a CSV file that Excel opens
 - Bill settings (header and footers printed on bills) with a receipt preview
 - Users: owners add staff and choose which branches they see
-- Profile and PIN change
+- Profile and password change
 - Branch switcher on every main screen
 - Appearance (More tab): light, dark or follow the phone, and on Android 12+
   an option to match the phone's wallpaper colours
@@ -53,8 +53,8 @@ flutter run --dart-define-from-file=config.json
 
 On Windows, `run.bat` does step 4 for you.
 
-Demo login (after `npm run db:seed` in the backend): `owner@demo.local`, PIN `1234`.
-Staff demo: `staff@demo.local`, PIN `1111`.
+Demo login (after `npm run db:seed` in the backend): username `demo`, password `demo1234`.
+Staff demo: username `staff`, password `staff1234`.
 
 ## Build a release
 
