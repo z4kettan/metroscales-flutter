@@ -58,6 +58,10 @@ Staff demo: username `staff`, password `staff1234`.
 
 ## Build a release
 
+The backend is hosted on Vercel. `config.production.example.json` points at
+`https://metroscales-backend.vercel.app`; copy it to `config.json` (and change the host if the Vercel
+project has another name) before a release build.
+
 ```
 flutter build apk --release --dart-define-from-file=config.json
 flutter build ipa --release --dart-define-from-file=config.json
