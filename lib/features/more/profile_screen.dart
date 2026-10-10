@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -43,7 +42,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           _DetailsCard(user: user),
           const SizedBox(height: 12),
-          const _PinCard(),
+          const _PasswordCard(),
         ],
       ),
     );
@@ -61,7 +60,7 @@ class _DetailsCard extends ConsumerStatefulWidget {
 class _DetailsCardState extends ConsumerState<_DetailsCard> {
   final _form = GlobalKey<FormState>();
   late final _name = TextEditingController(text: widget.user.name);
-  late final _email = TextEditingController(text: widget.user.email);
+  late final _email = TextEditingController(text: widget.user.email ?? '');
   bool _busy = false;
 
   @override
@@ -75,7 +74,11 @@ class _DetailsCardState extends ConsumerState<_DetailsCard> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      final user = await ref.read(authServiceProvider).updateProfile(name: _name.text.trim(), email: _email.text.trim());
+      final email = _email.text.trim();
+      final user = await ref.read(authServiceProvider).updateProfile(
+        name: _name.text.trim(),
+        email: email.isEmpty ? null : email,
+      );
       ref.read(authProvider.notifier).setUser(user);
       if (mounted) AppToast.success(context, 'Profile saved');
     } catch (e) {
@@ -93,6 +96,15 @@ class _DetailsCardState extends ConsumerState<_DetailsCard> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(children: [
             TextFormField(
+              initialValue: widget.user.username,
+              enabled: false,
+              decoration: const InputDecoration(
+                labelText: 'Username',
+                helperText: 'Your dealer or shop owner can change it',
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
               controller: _name,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Name'),
@@ -102,8 +114,8 @@ class _DetailsCardState extends ConsumerState<_DetailsCard> {
             TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Email'),
-              validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+              decoration: const InputDecoration(labelText: 'Email (optional)'),
+              validator: (v) => (v != null && v.trim().isNotEmpty && !v.contains('@')) ? 'Enter a valid email' : null,
             ),
             const SizedBox(height: 16),
             PrimaryButton(label: 'Save details', busy: _busy, onPressed: _save),
@@ -112,14 +124,14 @@ class _DetailsCardState extends ConsumerState<_DetailsCard> {
       );
 }
 
-class _PinCard extends ConsumerStatefulWidget {
-  const _PinCard();
+class _PasswordCard extends ConsumerStatefulWidget {
+  const _PasswordCard();
 
   @override
-  ConsumerState<_PinCard> createState() => _PinCardState();
+  ConsumerState<_PasswordCard> createState() => _PasswordCardState();
 }
 
-class _PinCardState extends ConsumerState<_PinCard> {
+class _PasswordCardState extends ConsumerState<_PasswordCard> {
   final _form = GlobalKey<FormState>();
   final _current = TextEditingController();
   final _next = TextEditingController();
@@ -138,11 +150,11 @@ class _PinCardState extends ConsumerState<_PinCard> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await ref.read(authServiceProvider).changePin(_current.text, _next.text);
+      await ref.read(authServiceProvider).changePassword(_current.text, _next.text);
       _current.clear();
       _next.clear();
       _repeat.clear();
-      if (mounted) AppToast.success(context, 'PIN changed');
+      if (mounted) AppToast.success(context, 'Password changed');
     } catch (e) {
       if (mounted) AppToast.error(context, e);
     } finally {
@@ -152,45 +164,40 @@ class _PinCardState extends ConsumerState<_PinCard> {
 
   @override
   Widget build(BuildContext context) {
-    final pin = [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(8)];
     return Form(
       key: _form,
       child: SectionCard(
-        title: 'Change PIN',
+        title: 'Change password',
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Column(children: [
           TextFormField(
             controller: _current,
             obscureText: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: pin,
-            decoration: const InputDecoration(labelText: 'Current PIN'),
-            validator: (v) => (v == null || v.isEmpty) ? 'Enter your current PIN' : null,
+            autofillHints: const [AutofillHints.password],
+            decoration: const InputDecoration(labelText: 'Current password'),
+            validator: (v) => (v == null || v.isEmpty) ? 'Enter your current password' : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
             controller: _next,
             obscureText: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: pin,
-            decoration: const InputDecoration(labelText: 'New PIN', helperText: '4 to 8 digits'),
-            validator: (v) => (v == null || v.length < 4) ? 'PIN must be 4 to 8 digits' : null,
+            autofillHints: const [AutofillHints.newPassword],
+            decoration: const InputDecoration(labelText: 'New password', helperText: 'At least 6 characters'),
+            validator: (v) => (v == null || v.length < 6) ? 'Use at least 6 characters' : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
             controller: _repeat,
             obscureText: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: pin,
-            decoration: const InputDecoration(labelText: 'Repeat new PIN'),
-            validator: (v) => v != _next.text ? 'PINs do not match' : null,
+            decoration: const InputDecoration(labelText: 'Repeat new password'),
+            validator: (v) => v != _next.text ? 'Passwords do not match' : null,
           ),
           const SizedBox(height: 16),
           OutlinedButton(
             onPressed: _busy ? null : _save,
             child: _busy
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2))
-                : const Text('Change PIN'),
+                : const Text('Change password'),
           ),
         ]),
       ),

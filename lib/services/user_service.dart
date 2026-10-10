@@ -10,26 +10,32 @@ class UserService {
 
   Future<void> create({
     required String name,
-    required String email,
-    required String pin,
+    required String username,
+    required String password,
     required String role,
     required List<String> branchIds,
   }) =>
-      _api.post('/users', body: {'name': name, 'email': email, 'pin': pin, 'role': role, 'branchIds': branchIds});
+      _api.post('/users', body: {
+        'name': name,
+        'username': username,
+        'password': password,
+        'role': role,
+        'branchIds': branchIds,
+      });
 
   Future<void> update(
     String id, {
     String? name,
-    String? email,
-    String? pin,
+    String? username,
+    String? password,
     String? role,
     List<String>? branchIds,
     bool? isActive,
   }) =>
       _api.patch('/users/$id', body: {
         'name': ?name,
-        'email': ?email,
-        'pin': ?pin,
+        'username': ?username,
+        'password': ?password,
         'role': ?role,
         'branchIds': ?branchIds,
         'isActive': ?isActive,

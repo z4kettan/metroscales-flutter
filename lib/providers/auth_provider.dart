@@ -26,8 +26,8 @@ class AuthNotifier extends AsyncNotifier<AppUser?> {
     }
   }
 
-  Future<void> login(String email, String pin) async {
-    final user = await ref.read(authServiceProvider).login(email, pin);
+  Future<void> login(String username, String password) async {
+    final user = await ref.read(authServiceProvider).login(username, password);
     state = AsyncData(user);
   }
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -18,15 +17,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _form = GlobalKey<FormState>();
-  final _email = TextEditingController();
-  final _pin = TextEditingController();
+  final _username = TextEditingController();
+  final _password = TextEditingController();
   bool _busy = false;
-  bool _showPin = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
-    _email.dispose();
-    _pin.dispose();
+    _username.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -34,7 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await ref.read(authProvider.notifier).login(_email.text, _pin.text);
+      await ref.read(authProvider.notifier).login(_username.text, _password.text);
     } catch (e) {
       if (mounted) AppToast.error(context, e);
     } finally {
@@ -76,38 +75,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: AutofillGroup(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                           TextFormField(
-                            controller: _email,
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _username,
+                            keyboardType: TextInputType.visiblePassword,
+                            autocorrect: false,
+                            enableSuggestions: false,
                             textInputAction: TextInputAction.next,
-                            autofillHints: const [AutofillHints.email, AutofillHints.username],
+                            autofillHints: const [AutofillHints.username],
                             decoration: const InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: Icon(Icons.alternate_email_rounded),
+                              labelText: 'Username',
+                              prefixIcon: Icon(Icons.person_outline_rounded),
                             ),
                             validator: (v) =>
-                                (v == null || !v.contains('@')) ? 'Enter the email your dealer set up' : null,
+                                (v == null || v.trim().isEmpty) ? 'Enter the username your dealer gave you' : null,
                           ),
                           const SizedBox(height: 14),
                           TextFormField(
-                            controller: _pin,
-                            obscureText: !_showPin,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(8),
-                            ],
+                            controller: _password,
+                            obscureText: !_showPassword,
+                            autocorrect: false,
+                            enableSuggestions: false,
                             autofillHints: const [AutofillHints.password],
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _submit(),
                             decoration: InputDecoration(
-                              labelText: 'PIN',
-                              prefixIcon: const Icon(Icons.pin_outlined),
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock_outline_rounded),
                               suffixIcon: IconButton(
-                                icon: Icon(_showPin ? Icons.visibility_off_rounded : Icons.visibility_rounded),
-                                onPressed: () => setState(() => _showPin = !_showPin),
+                                icon: Icon(_showPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded),
+                                onPressed: () => setState(() => _showPassword = !_showPassword),
                               ),
                             ),
-                            validator: (v) => (v == null || v.length < 4) ? 'PIN is 4 to 8 digits' : null,
+                            validator: (v) => (v == null || v.isEmpty) ? 'Enter your password' : null,
                           ),
                           const SizedBox(height: 24),
                           PrimaryButton(label: 'Sign in', icon: Icons.arrow_forward_rounded, busy: _busy, onPressed: _submit),
@@ -122,7 +120,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Forgot your PIN? Ask your shop owner or dealer to reset it.',
+                      'Forgot your password? Ask your shop owner or dealer to reset it.',
                       style: context.tt.bodySmall,
                     ),
                   ),
